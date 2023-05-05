@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - '1883:1883'
+      - '9001:9001'
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto-volume:/mosquitto
+volumes:
+  mosquitto-volume: {}

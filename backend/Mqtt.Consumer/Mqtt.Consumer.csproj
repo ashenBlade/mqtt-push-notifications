@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>dotnet-Mqtt.Consumer-DF41D659-1297-483A-9863-51AAEB02B8BB</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+        <PackageReference Include="MQTTnet" Version="4.2.0.706" />
+        <PackageReference Include="MQTTnet.AspNetCore" Version="4.2.0.706" />
+        <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.2.0.706" />
+    </ItemGroup>
+</Project>
