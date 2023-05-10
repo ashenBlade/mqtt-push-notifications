@@ -2,11 +2,9 @@ package com.example.mqttapplication
 
 import android.content.Context
 import android.util.Log
-import kotlinx.coroutines.coroutineScope
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener
 import org.eclipse.paho.client.mqttv3.IMqttToken
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
@@ -90,7 +88,6 @@ class MqttClient(private val serverUri: String,
                 }
                 messageArrivedHandler(i)
             }
-//            token.waitForCompletion()
         } catch (e: MqttException) {
             Log.e(LogTag, "Ошибка во время подписки на топик $topic", e)
         } catch (e: NullPointerException) {
@@ -99,13 +96,12 @@ class MqttClient(private val serverUri: String,
     }
 
     companion object {
-        // https://stackoverflow.com/a/56873275/14109140
-        private fun littleEndianConversion(bytes: ByteArray): Int {
-            var result = 0
-            for (i in bytes.indices) {
-                result = result or (bytes[i].toInt() shl (8 * i))
-            }
-            return result
+        // https://stackoverflow.com/a/70595131/14109140
+        private fun littleEndianConversion(paddedArray: ByteArray): Int {
+            return (((paddedArray[3].toULong() and 0xFFu) shl 24) or
+                    ((paddedArray[2].toULong() and 0xFFu) shl 16) or
+                    ((paddedArray[1].toULong() and 0xFFu) shl 8) or
+                    (paddedArray[0].toULong() and 0xFFu)).toInt()
         }
 
         const val LogTag = "AndroidMqttClient"
