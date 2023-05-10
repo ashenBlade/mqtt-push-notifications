@@ -3,10 +3,7 @@
 /// <summary>
 /// Пуш, передаваемый на андроид-клиент
 /// </summary>
-public class Message
+public record Message(string Title, string Body, string Template)
 {
-    public Guid Id { get; set; }
-    public string Title { get; set; }
-    public string Body { get; set; }
-    public string Template { get; set; }
+    public Guid Id { get; init; } = Guid.NewGuid();
 }

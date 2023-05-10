@@ -12,5 +12,9 @@
         <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.2.0.706" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Mqtt.Models\Mqtt.Models.csproj" />
+    </ItemGroup>
     
 </Project>
