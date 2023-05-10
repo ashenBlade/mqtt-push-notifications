@@ -12,9 +12,5 @@
         <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.2.0.706" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Models\" />
-    </ItemGroup>
-
+    
 </Project>
