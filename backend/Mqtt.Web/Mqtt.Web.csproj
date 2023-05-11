@@ -4,6 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,6 +16,18 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Mqtt.Models\Mqtt.Models.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="SampleFile.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
     </ItemGroup>
     
 </Project>

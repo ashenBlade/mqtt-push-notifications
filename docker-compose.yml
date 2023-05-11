@@ -9,5 +9,19 @@ services:
     volumes:
       - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - mosquitto-volume:/mosquitto
+  
+  producer:
+    build:
+      context: backend
+      dockerfile: Mqtt.Web/Dockerfile
+    ports:
+      - '5000:80'
+    environment:
+      Mqtt__Host: mosquitto
+      Mqtt__Port: 1883
+      Mqtt__IntegersTopic: /integers
+      Mqtt__MessageTopic: /messages
+
+
 volumes:
   mosquitto-volume: {}
