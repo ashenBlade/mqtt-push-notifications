@@ -42,13 +42,13 @@ public class MqttController : ControllerBase
     }
 
     [HttpPost("single/message")]
-    public async Task<IActionResult> PostSingleMessage(string title = "Sample title", string body = "Hello, world!", PushImportance importance = PushImportance.None)
+    public async Task<IActionResult> PostSingleMessage(Guid deviceId, string title = "Sample title", string body = "Hello, world!", PushImportance importance = PushImportance.None)
     {
         var message = new Message(title, body, importance);
         _logger.LogDebug("Сообщение создано");
         var topic = _options.Value.MessageTopic;
         _logger.LogInformation("Сообщение отправляется в топик {Topic}", topic);
-        var result = await _client.PublishStringAsync(topic, JsonSerializer.Serialize(message),
+        var result = await _client.PublishStringAsync($"/push/{deviceId:D}", JsonSerializer.Serialize(message),
                          MqttQualityOfServiceLevel.AtLeastOnce);
         _logger.LogInformation("Сообщение отправлено в топик {Topic}", topic);
         _logger.LogDebug("Успшено: {IsSuccess}. Код: {ReasonCode}", result.IsSuccess, result.ReasonCode);
