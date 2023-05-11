@@ -1,8 +1,12 @@
 package com.example.mqttapplication
 
+import android.app.Notification
 import android.content.Context
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import com.example.mqttapplication.models.Message
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.eclipse.paho.android.service.MqttAndroidClient
@@ -23,26 +27,6 @@ class MqttClient(private val serverUri: String,
 
     fun connect(onConnected: () -> Unit = {}) {
         mqttClient = MqttAndroidClient(appContext, serverUri, ClientId, MemoryPersistence())
-//        mqttClient.setCallback(object: MqttCallbackExtended {
-//            override fun connectComplete(reconnect: Boolean, serverURI: String?) {
-//                Log.d(LogTag, "Соединение с сервером $serverURI установлено")
-//            }
-//
-//            override fun connectionLost(cause: Throwable?) {
-//                Log.d(LogTag, "Соединение с сервером потеряно", cause)
-//            }
-//
-//            override fun messageArrived(topic: String?, message: MqttMessage?) {
-//                if (message == null) {
-//                    Log.w(LogTag, "Нагрузка в сообщении - null")
-//                    return
-//                }
-//            }
-//
-//            override fun deliveryComplete(token: IMqttDeliveryToken?) {
-//                Log.d(LogTag, "Доставка завершена. Токен: $token")
-//            }
-//        })
         val options = MqttConnectOptions().apply {
             isAutomaticReconnect = true
             isCleanSession = true
