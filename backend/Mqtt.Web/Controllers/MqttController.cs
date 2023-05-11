@@ -42,9 +42,9 @@ public class MqttController : ControllerBase
     }
 
     [HttpPost("single/message")]
-    public async Task<IActionResult> PostSingleMessage(string title = "Sample title", string body = "Hello, world!", string template = "PushTest")
+    public async Task<IActionResult> PostSingleMessage(string title = "Sample title", string body = "Hello, world!", PushImportance importance = PushImportance.None)
     {
-        var message = new Message(title, body, template);
+        var message = new Message(title, body, importance);
         _logger.LogDebug("Сообщение создано");
         var topic = _options.Value.MessageTopic;
         _logger.LogInformation("Сообщение отправляется в топик {Topic}", topic);
