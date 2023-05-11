@@ -1,14 +1,12 @@
 package com.example.mqttapplication
 
 import android.Manifest
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,14 +20,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.example.mqttapplication.models.Message
 import com.example.mqttapplication.screen.MessagesScreen
+import com.example.mqttapplication.services.MqttClient
 import com.example.mqttapplication.ui.theme.MqttApplicationTheme
-import kotlinx.coroutines.awaitAll
-import java.util.Locale.Category
 
 private const val channelId = "channel1"
 
