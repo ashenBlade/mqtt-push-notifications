@@ -2,6 +2,9 @@ package com.example.mqttapplication
 
 import android.content.Context
 import android.util.Log
+import com.example.mqttapplication.models.Message
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
@@ -15,34 +18,31 @@ import java.lang.NullPointerException
 
 class MqttClient(private val serverUri: String,
                  private val appContext: Context,
-                 private val messageArrivedHandler: (Int) -> Unit) {
+                 private val messageArrivedHandler: (Message) -> Unit) {
     private lateinit var mqttClient: MqttAndroidClient
 
     fun connect(onConnected: () -> Unit = {}) {
         mqttClient = MqttAndroidClient(appContext, serverUri, ClientId, MemoryPersistence())
-        mqttClient.setCallback(object: MqttCallbackExtended {
-            override fun connectComplete(reconnect: Boolean, serverURI: String?) {
-                Log.d(LogTag, "Соединение с сервером $serverURI установлено")
-            }
-
-            override fun connectionLost(cause: Throwable?) {
-                Log.d(LogTag, "Соединение с сервером потеряно", cause)
-            }
-
-            override fun messageArrived(topic: String?, message: MqttMessage?) {
-                if (message == null) {
-                    Log.w(LogTag, "Нагрузка в сообщении - null")
-                    return
-                }
-                val value = littleEndianConversion(message.payload)
-                messageArrivedHandler(value)
-                Log.i(LogTag, "Получено сообщение: $value")
-            }
-
-            override fun deliveryComplete(token: IMqttDeliveryToken?) {
-                Log.d(LogTag, "Доставка завершена. Токен: $token")
-            }
-        })
+//        mqttClient.setCallback(object: MqttCallbackExtended {
+//            override fun connectComplete(reconnect: Boolean, serverURI: String?) {
+//                Log.d(LogTag, "Соединение с сервером $serverURI установлено")
+//            }
+//
+//            override fun connectionLost(cause: Throwable?) {
+//                Log.d(LogTag, "Соединение с сервером потеряно", cause)
+//            }
+//
+//            override fun messageArrived(topic: String?, message: MqttMessage?) {
+//                if (message == null) {
+//                    Log.w(LogTag, "Нагрузка в сообщении - null")
+//                    return
+//                }
+//            }
+//
+//            override fun deliveryComplete(token: IMqttDeliveryToken?) {
+//                Log.d(LogTag, "Доставка завершена. Токен: $token")
+//            }
+//        })
         val options = MqttConnectOptions().apply {
             isAutomaticReconnect = true
             isCleanSession = true
@@ -79,14 +79,14 @@ class MqttClient(private val serverUri: String,
                 }
             }) { t, message ->
                 Log.d(LogTag, "Получено сообщение из топика $t")
-                val i: Int
+                val deserialized: Message
                 try {
-                    i = littleEndianConversion(message.payload)
+                    deserialized = Json.decodeFromString(message.payload.toString(Charsets.UTF_8))
                 } catch (e: Exception) {
-                    Log.e(LogTag, "Ошибка во время конвертации массива байтов в Int")
+                    Log.e(LogTag, "Ошибка десериализации сообщения")
                     return@subscribe
                 }
-                messageArrivedHandler(i)
+                messageArrivedHandler(deserialized)
             }
         } catch (e: MqttException) {
             Log.e(LogTag, "Ошибка во время подписки на топик $topic", e)
@@ -105,7 +105,7 @@ class MqttClient(private val serverUri: String,
         }
 
         const val LogTag = "AndroidMqttClient"
-        const val SubscribeTopic = "/integers"
-        const val ClientId = "AndroidClient";
+        const val SubscribeTopic = "/messages"
+        const val ClientId = "AndroidClient"
     }
 }
