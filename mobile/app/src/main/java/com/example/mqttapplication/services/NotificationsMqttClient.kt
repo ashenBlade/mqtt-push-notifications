@@ -3,52 +3,56 @@ package com.example.mqttapplication.services
 import android.content.Context
 import android.util.Log
 import com.example.mqttapplication.models.Message
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttToken
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
-import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-import java.lang.NullPointerException
+import java.util.UUID
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
-class MqttClient(private val serverUri: String,
-                 private val appContext: Context,
-                 private val messageArrivedHandler: (Message) -> Unit) {
+class AppMqttClient(private val serverUri: String,
+                    private val appContext: Context) {
     private lateinit var mqttClient: MqttAndroidClient
 
-    fun connect(onConnected: () -> Unit = {}) {
+    suspend fun connect(): Boolean {
         mqttClient = MqttAndroidClient(appContext, serverUri, ClientId, MemoryPersistence())
         val options = MqttConnectOptions().apply {
             isAutomaticReconnect = true
             isCleanSession = true
         }
 
-        try {
+        return suspendCoroutine {
             mqttClient.connect(options, null, object: IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken?) {
                     Log.i(LogTag, "Соединение успешно установлено")
-                    onConnected()
+                    it.resume(true)
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
                     Log.i(LogTag, "Ошибка во время установки соединения", exception)
+                    it.resume(false)
                 }
             })
-        } catch (e: MqttException) {
-            Log.e(LogTag, "Ошибка соединения с брокером", e)
         }
     }
 
-    fun subscribe(topic: String = SubscribeTopic, onSubscribed: () -> Unit = {}) {
-        try {
-            // At least once
-            val qos = 1
-            mqttClient.subscribe(topic, qos, null, object: IMqttActionListener {
+    suspend fun subscribe(deviceId: UUID): Flow<Message> {
+        // At least once
+        val qos = 1
+
+        return callbackFlow {
+            val topic = createMessagesTopic(deviceId)
+            Log.i("NotificationsMqttClient", "Подписываюсь на топик $topic")
+            mqttClient.subscribe(topic, qos, null, object : IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken?) {
                     Log.i(LogTag, "Успешная подписка на топик")
-                    onSubscribed()
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
@@ -63,26 +67,21 @@ class MqttClient(private val serverUri: String,
                     Log.e(LogTag, "Ошибка десериализации сообщения")
                     return@subscribe
                 }
-                messageArrivedHandler(deserialized)
+
+                trySend(deserialized)
             }
-        } catch (e: MqttException) {
-            Log.e(LogTag, "Ошибка во время подписки на топик $topic", e)
-        } catch (e: NullPointerException) {
-            Log.e(LogTag, "Неизвестная ошибка")
+
+            this.awaitClose {
+                mqttClient.unsubscribe(topic)
+            }
         }
+
     }
 
     companion object {
-        // https://stackoverflow.com/a/70595131/14109140
-        private fun littleEndianConversion(paddedArray: ByteArray): Int {
-            return (((paddedArray[3].toULong() and 0xFFu) shl 24) or
-                    ((paddedArray[2].toULong() and 0xFFu) shl 16) or
-                    ((paddedArray[1].toULong() and 0xFFu) shl 8) or
-                    (paddedArray[0].toULong() and 0xFFu)).toInt()
-        }
+        fun createMessagesTopic(deviceId: UUID): String = "/push/$deviceId"
 
         const val LogTag = "AndroidMqttClient"
-        const val SubscribeTopic = "/messages"
         const val ClientId = "AndroidClient"
     }
 }

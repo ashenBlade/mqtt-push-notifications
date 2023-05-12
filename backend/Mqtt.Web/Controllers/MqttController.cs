@@ -46,9 +46,9 @@ public class MqttController : ControllerBase
     {
         var message = new Message(title, body, importance);
         _logger.LogDebug("Сообщение создано");
-        var topic = _options.Value.MessageTopic;
+        var topic = $"/push/{deviceId}";
         _logger.LogInformation("Сообщение отправляется в топик {Topic}", topic);
-        var result = await _client.PublishStringAsync($"/push/{deviceId:D}", JsonSerializer.Serialize(message),
+        var result = await _client.PublishStringAsync(topic, JsonSerializer.Serialize(message),
                          MqttQualityOfServiceLevel.AtLeastOnce);
         _logger.LogInformation("Сообщение отправлено в топик {Topic}", topic);
         _logger.LogDebug("Успшено: {IsSuccess}. Код: {ReasonCode}", result.IsSuccess, result.ReasonCode);
