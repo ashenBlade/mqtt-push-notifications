@@ -1,6 +1,7 @@
 package com.example.mqttapplication.viewmodels
 
-import android.app.NotificationManager
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+@RequiresApi(Build.VERSION_CODES.O)
 class CommonViewModel(val appService: AppService, val client: AppMqttClient, val manager: CustomNotificationManger): ViewModel() {
     val deviceId = MutableLiveData<UUID>()
     val messages = mutableStateListOf<Message>()
@@ -28,8 +30,9 @@ class CommonViewModel(val appService: AppService, val client: AppMqttClient, val
     fun subscribeToMessages() {
         viewModelScope.launch {
             if (client.connect()) {
-                val flow = client.subscribe(deviceId.value!!)
+                val flow = client.subscribeToAllAndDevice(deviceId.value!!)
                     .cancellable()
+
                 flow.collect {
                     manager.notify(it)
                     messages.add(it)

@@ -11,10 +11,4 @@ public class MqttOptions
 
     [Required]
     public int Port { get; set; }
-
-    [Required]
-    public string IntegersTopic { get; set; } = null!;
-
-    [Required]
-    public string MessageTopic { get; set; } = null!;
 }

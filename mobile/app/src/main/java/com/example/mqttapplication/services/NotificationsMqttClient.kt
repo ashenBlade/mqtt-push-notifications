@@ -43,20 +43,44 @@ class AppMqttClient(private val serverUri: String,
         }
     }
 
-    suspend fun subscribe(deviceId: UUID): Flow<Message> {
+    suspend fun subscribeToAllAndDevice(deviceId: UUID): Flow<Message> {
         // At least once
         val qos = 1
 
         return callbackFlow {
-            val topic = createMessagesTopic(deviceId)
-            Log.i("NotificationsMqttClient", "Подписываюсь на топик $topic")
-            mqttClient.subscribe(topic, qos, null, object : IMqttActionListener {
+            // Подписываюсь на пуши для устройства
+            val deviceTopic = createDeviceMessagesTopic(deviceId)
+            Log.i("NotificationsMqttClient", "Подписываюсь на топик $deviceTopic")
+            mqttClient.subscribe(deviceTopic, qos, null, object : IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken?) {
-                    Log.i(LogTag, "Успешная подписка на топик")
+                    Log.i(LogTag, "Успешная подписка на топик $deviceTopic")
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
-                    Log.i(LogTag, "Ошибка подписки на топик", exception)
+                    Log.i(LogTag, "Ошибка подписки на топик $deviceTopic", exception)
+                }
+            }) { t, message ->
+                Log.d(LogTag, "Получено сообщение из топика $t")
+                val deserialized: Message
+                try {
+                    deserialized = Json.decodeFromString(message.payload.toString(Charsets.UTF_8))
+                } catch (e: Exception) {
+                    Log.e(LogTag, "Ошибка десериализации сообщения")
+                    return@subscribe
+                }
+
+                trySend(deserialized)
+            }
+
+            // Подписываюсь на все уведомления
+            val allTopic = createAllMessagesTopic()
+            mqttClient.subscribe(allTopic, qos, null, object : IMqttActionListener {
+                override fun onSuccess(asyncActionToken: IMqttToken?) {
+                    Log.i(LogTag, "Успешная подписка на топик $allTopic")
+                }
+
+                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                    Log.i(LogTag, "Ошибка подписки на топик $allTopic", exception)
                 }
             }) { t, message ->
                 Log.d(LogTag, "Получено сообщение из топика $t")
@@ -72,15 +96,15 @@ class AppMqttClient(private val serverUri: String,
             }
 
             this.awaitClose {
-                mqttClient.unsubscribe(topic)
+                mqttClient.unsubscribe(arrayOf(deviceTopic, allTopic))
             }
         }
 
     }
 
     companion object {
-        fun createMessagesTopic(deviceId: UUID): String = "/push/$deviceId"
-
+        fun createDeviceMessagesTopic(deviceId: UUID): String = "/push/$deviceId"
+        fun createAllMessagesTopic() = "/push"
         const val LogTag = "AndroidMqttClient"
         const val ClientId = "AndroidClient"
     }
