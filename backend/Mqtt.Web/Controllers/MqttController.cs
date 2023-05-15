@@ -24,34 +24,30 @@ public class MqttController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("single/integer")]
-    public async Task<IActionResult> PostSingleInteger()
-    {
-        var i = Random.Shared.Next();
-        var message = new MqttApplicationMessageBuilder()
-                                    .WithPayload(BitConverter.GetBytes(i))
-                                    .WithTopic(_options.Value.IntegersTopic)
-                                    .Build();
-        _logger.LogDebug("Сообщение создано");
-        var result = await _client.PublishAsync(message);
-        _logger.LogInformation("Сообщение отправлено. Результат {IsSuccess}. Reason: {ReasonString}", result.IsSuccess, result.ReasonString);
-        return Ok(new
-        {
-            Value = i
-        });
-    }
-
-    [HttpPost("single/message")]
+    [HttpPost("message/single")]
     public async Task<IActionResult> PostSingleMessage(Guid deviceId, string title = "Sample title", string body = "Hello, world!", PushImportance importance = PushImportance.None)
     {
-        var message = new Message(title, body, importance);
-        _logger.LogDebug("Сообщение создано");
         var topic = $"/push/{deviceId}";
+        var message = await SendMessageAsync(title, body, importance, topic);
+        return Ok(message);
+    }
+
+    private async Task<Message> SendMessageAsync(string title, string body, PushImportance importance, string topic)
+    {
+        var message = new Message(title, body, importance);
         _logger.LogInformation("Сообщение отправляется в топик {Topic}", topic);
         var result = await _client.PublishStringAsync(topic, JsonSerializer.Serialize(message),
                          MqttQualityOfServiceLevel.AtLeastOnce);
         _logger.LogInformation("Сообщение отправлено в топик {Topic}", topic);
         _logger.LogDebug("Успшено: {IsSuccess}. Код: {ReasonCode}", result.IsSuccess, result.ReasonCode);
+        return message;
+    }
+
+    [HttpPost("message/all")]
+    public async Task<IActionResult> PostMessageAll(string title = "Sample title", string body = "Hello, world!", PushImportance importance = PushImportance.None)
+    {
+        var topic = "/push";
+        var message = await SendMessageAsync(title, body, importance, topic);
         return Ok(message);
     }
 }
